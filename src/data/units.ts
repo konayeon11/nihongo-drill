@@ -14,15 +14,29 @@ const numberKanjiIds = kanji.filter((k) => NUM_KANJI.includes(k.char)).map((k) =
 const baseKanjiIds = kanji
   .filter((k) => k.level === 'N5' && !numberKanjiIds.includes(k.id))
   .map((k) => k.id)
-const signKanjiIds = kanji.filter((k) => k.theme === '간판' || k.theme === '온천').map((k) => k.id)
+const signKanjiIds = [
+  'k-061',
+  'k-062',
+  ...kanji.filter((k) => k.theme === '간판' || k.theme === '온천').map((k) => k.id),
+]
 
 const baseGrammarIds = grammar.filter((g) => g.level === 'N5').map((g) => g.id)
+
+const n4KanjiIds = kanji.filter((k) => k.level === 'N4').map((k) => k.id)
+const n4GrammarIds = grammar.filter((g) => g.level === 'N4').map((g) => g.id)
+const half = <T,>(arr: T[]): [T[], T[]] => {
+  const mid = Math.ceil(arr.length / 2)
+  return [arr.slice(0, mid), arr.slice(mid)]
+}
+const [n4Kanji1, n4Kanji2] = half(n4KanjiIds)
+const [n4Grammar1, n4Grammar2] = half(n4GrammarIds)
 
 export const courses: Course[] = [
   { id: 'kana', title: '가나 익히기', tagline: '히라가나·가타카나·탁음을 차근차근', icon: 'あ' },
   { id: 'travel', title: '여행 생존 회화', tagline: '인사부터 길 찾기, 주문, 쇼핑까지', icon: '✈' },
   { id: 'hobby', title: '취미 생활', tagline: '골프·뜨개질·온천·미술관에서 쓰는 말', icon: '⛳' },
   { id: 'base', title: '기초 다지기', tagline: '가족·시간·신체 같은 기본 어휘와 문법', icon: '基' },
+  { id: 'n4', title: 'N4로 넓히기', tagline: 'N5 다음 단계, 한 걸음 더 깊은 일본어', icon: 'N4' },
 ]
 
 export const units: Unit[] = [
@@ -294,6 +308,64 @@ export const units: Unit[] = [
     subtitle: '문장을 만드는 기본 규칙',
     icon: '文',
     cardIds: baseGrammarIds,
+  },
+
+  // ── N4로 넓히기 ──────────────────────────────
+  {
+    id: 'u-n4-1',
+    course: 'n4',
+    title: 'N4 단어 1',
+    subtitle: '감정·상태 표현',
+    icon: '😌',
+    cardIds: byTag(['N4감정']),
+  },
+  {
+    id: 'u-n4-2',
+    course: 'n4',
+    title: 'N4 단어 2',
+    subtitle: '동사·행동 표현',
+    icon: '🏃',
+    cardIds: byTag(['N4동사']),
+  },
+  {
+    id: 'u-n4-3',
+    course: 'n4',
+    title: 'N4 단어 3',
+    subtitle: '형용사·부사·기타',
+    icon: '📝',
+    cardIds: byTag(['N4형용사', 'N4부사', 'N4기타']),
+  },
+  {
+    id: 'u-n4-4',
+    course: 'n4',
+    title: 'N4 한자 1',
+    subtitle: '생활·장소·동작',
+    icon: '漢',
+    cardIds: n4Kanji1,
+  },
+  {
+    id: 'u-n4-5',
+    course: 'n4',
+    title: 'N4 한자 2',
+    subtitle: '상태·날씨·사회',
+    icon: '漢',
+    cardIds: n4Kanji2,
+  },
+  {
+    id: 'u-n4-6',
+    course: 'n4',
+    title: 'N4 문법 1',
+    subtitle: '가능·의무·추측',
+    icon: '文',
+    cardIds: n4Grammar1,
+  },
+  {
+    id: 'u-n4-7',
+    course: 'n4',
+    title: 'N4 문법 2',
+    subtitle: '조건·수동·사역·수수',
+    icon: '文',
+    cardIds: n4Grammar2,
   },
 ]
 

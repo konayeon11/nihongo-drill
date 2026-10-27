@@ -1,7 +1,7 @@
 /** 학습 덱 종류 */
 export type Deck = 'kana' | 'word' | 'kanji' | 'grammar' | 'phrase'
 
-export type Level = 'N5' | 'kana' | 'basic' | 'travel' | 'hobby'
+export type Level = 'N5' | 'N4' | 'kana' | 'basic' | 'travel' | 'hobby'
 
 export interface Example {
   jp: string
@@ -184,7 +184,7 @@ export interface SessionAnswer {
   isNew: boolean
 }
 
-export type CourseId = 'kana' | 'travel' | 'hobby' | 'base'
+export type CourseId = 'kana' | 'travel' | 'hobby' | 'base' | 'n4'
 
 export interface Unit {
   id: string
