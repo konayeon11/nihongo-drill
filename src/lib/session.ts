@@ -137,7 +137,7 @@ function typesFor(card: Card, reps: number): QuizType[] {
     }
     case 'kanji':
       if (reps === 1) return ['choice-jp-ko', 'choice-ko-jp']
-      return ['typing-meaning', 'typing-meaning', 'choice-jp-ko']
+      return ['typing-meaning', 'typing-meaning', 'choice-jp-ko', 'listen']
     case 'phrase':
       if (reps === 1) return ['choice-jp-ko', 'listen']
       return ['typing-meaning', 'choice-jp-ko', 'listen']

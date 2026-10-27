@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Deck, Grade, QuizQuestion, SessionAnswer } from '../types'
 import { DECK_LABEL, findSource } from '../data/cards'
-import { unitOf } from '../data/units'
+import { unitOf, unitTitleByCard } from '../data/units'
 import { TYPE_PROMPT, buildQueue, makeQuestion } from '../lib/session'
 import { fuzzyMatchKo, kanaEqual } from '../lib/match'
 import { intervalLabel } from '../lib/srs'
@@ -12,6 +12,10 @@ import { SpeakButton } from '../components/SpeakButton'
 import { KanaKeypad } from '../components/KanaKeypad'
 
 const MAX_REQUEUE = 2
+/** 오답 재시험과 별개로, 정답을 맞혀도 아직 충분히 숙련되지 않은 카드는
+ * 같은 세션 안에서 더 어려운 유형으로 한 번 더 테스트한다 (예: 선택형 → 타이핑). */
+const MAX_REINFORCE = 2
+const REINFORCE_BELOW_REPS = 3
 
 interface Feedback {
   correct: boolean
@@ -35,6 +39,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
   const xpRef = useRef(0)
   const goalRef = useRef(false)
   const requeues = useRef<Record<string, number>>({})
+  const reinforced = useRef<Record<string, number>>({})
   const startedAt = useRef(Date.now())
   const planned = useRef(0)
 
@@ -86,6 +91,14 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
         const used = requeues.current[q.card.id] ?? 0
         if (used < MAX_REQUEUE) {
           requeues.current[q.card.id] = used + 1
+          setQueue((prev) => [...prev, makeQuestion(q.card, res.progress)])
+        }
+      } else {
+        // 정답이어도 아직 복습 횟수가 적은 카드는 같은 세션 안에서 더 어려운
+        // 유형으로 한 번 더 테스트해서, 첫날에도 선택형→타이핑까지 이어지게 한다.
+        const done = reinforced.current[q.card.id] ?? 0
+        if (done < MAX_REINFORCE && res.progress.reps < REINFORCE_BELOW_REPS) {
+          reinforced.current[q.card.id] = done + 1
           setQueue((prev) => [...prev, makeQuestion(q.card, res.progress)])
         }
       }
@@ -154,6 +167,9 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
 
       <div className="qmeta">
         <span className="chip">{DECK_LABEL[q.card.deck]}</span>
+        {unitTitleByCard[q.card.id] && (
+          <span className="chip chip--unit">{unitTitleByCard[q.card.id]}</span>
+        )}
         {q.isNew && <span className="chip chip--new">새 카드</span>}
         <span className="qprompt">{TYPE_PROMPT[q.type]}</span>
       </div>

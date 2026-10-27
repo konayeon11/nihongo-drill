@@ -376,3 +376,18 @@ export function unitsByCourse(course: string): Unit[] {
 export function unitOf(id: string): Unit | undefined {
   return units.find((u) => u.id === id)
 }
+
+/**
+ * 카드가 세션에서 섞여 나올 때 "어느 분야(유닛)"에서 왔는지 보여주기 위한 역색인.
+ * 한 카드가 여러 유닛에 속할 수 있으므로 가장 먼저 매칭되는 유닛(= units 배열의 앞쪽,
+ * 더 구체적인 코스 순서)을 대표 라벨로 쓴다.
+ */
+export const unitTitleByCard: Record<string, string> = (() => {
+  const map: Record<string, string> = {}
+  for (const u of units) {
+    for (const id of u.cardIds) {
+      if (!map[id]) map[id] = u.title
+    }
+  }
+  return map
+})()
