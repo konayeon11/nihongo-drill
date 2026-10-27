@@ -1,8 +1,9 @@
 import { cardById } from '../data/cards'
 import { today } from '../lib/date'
-import { effectiveStreak, levelProgress } from '../lib/gamify'
+import { effectiveStreak, levelFromXp, levelProgress } from '../lib/gamify'
 import { Link, navigate } from '../router'
 import { useApp } from '../state/AppContext'
+import { Confetti } from '../components/Confetti'
 
 export function Result() {
   const { lastSession, user, todayLog } = useApp()
@@ -24,16 +25,23 @@ export function Result() {
   const accuracy = total ? Math.round((correct / total) * 100) : 0
   const minutes = Math.max(1, Math.round((Date.now() - lastSession.startedAt) / 60000))
   const lvl = levelProgress(user.totalXp)
+  const leveledUp = levelFromXp(user.totalXp - xpGained) < lvl.level
+  const celebrate = goalMetNow || leveledUp
 
   // 같은 카드를 여러 번 틀렸어도 한 번만 보여준다
   const missed = [...new Set(answers.filter((a) => !a.correct).map((a) => a.cardId))]
 
   return (
     <div className="screen screen--result">
+      {celebrate && <Confetti />}
       <div className="result-hero">
-        <p className="result-emoji">{goalMetNow ? '🔥' : accuracy >= 80 ? '🎉' : '💪'}</p>
+        <p className="result-emoji">{leveledUp ? '⭐' : goalMetNow ? '🔥' : accuracy >= 80 ? '🎉' : '💪'}</p>
         <h1 className="result-title">
-          {goalMetNow ? `${effectiveStreak(user, today())}일 연속 달성!` : '세션 완료'}
+          {leveledUp
+            ? `레벨 ${lvl.level}이 됐어요!`
+            : goalMetNow
+              ? `${effectiveStreak(user, today())}일 연속 달성!`
+              : '세션 완료'}
         </h1>
         <p className="result-sub">
           {total}문제 · {minutes}분

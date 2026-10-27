@@ -3,16 +3,24 @@ interface Props {
   size?: number
   stroke?: number
   children?: React.ReactNode
-  tone?: 'primary' | 'flame'
+  tone?: 'primary' | 'flame' | 'hero'
+  className?: string
 }
 
-export function ProgressRing({ ratio, size = 136, stroke = 12, children, tone = 'primary' }: Props) {
+export function ProgressRing({
+  ratio,
+  size = 136,
+  stroke = 12,
+  children,
+  tone = 'primary',
+  className,
+}: Props) {
   const r = (size - stroke) / 2
   const circ = 2 * Math.PI * r
   const clamped = Math.max(0, Math.min(1, ratio))
 
   return (
-    <div className="ring" style={{ width: size, height: size }}>
+    <div className={className ? `ring ${className}` : 'ring'} style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
         <circle className="ring-track" cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} />
         <circle

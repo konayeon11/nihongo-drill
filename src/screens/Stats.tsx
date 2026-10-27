@@ -3,6 +3,7 @@ import { ALL_DECKS, DECK_LABEL, allCards } from '../data/cards'
 import { recentDays, today } from '../lib/date'
 import { effectiveStreak, levelProgress } from '../lib/gamify'
 import { deckStats } from '../lib/session'
+import { ACHIEVEMENTS } from '../lib/achievements'
 import { useApp } from '../state/AppContext'
 import { Heatmap } from '../components/Heatmap'
 
@@ -28,6 +29,8 @@ export function Stats() {
 
   const last14 = recentDays(14, day)
   const max14 = Math.max(1, ...last14.map((k) => dayLogs[k]?.reviews ?? 0))
+
+  const achieveCtx = { user, learnedCount: learned, studyDays: totals.days }
 
   return (
     <div className="screen">
@@ -82,6 +85,21 @@ export function Stats() {
             return (
               <div className="barchart-col" key={k} title={`${k} · ${n}문제`}>
                 <div className="barchart-bar" style={{ height: `${(n / max14) * 100}%` }} />
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2 className="card-title">배지</h2>
+        <div className="badge-grid">
+          {ACHIEVEMENTS.map((a) => {
+            const unlocked = a.done(achieveCtx)
+            return (
+              <div key={a.id} className={unlocked ? 'achv is-on' : 'achv'} title={a.desc}>
+                <span className="achv-icon">{unlocked ? a.icon : '🔒'}</span>
+                <span className="achv-title">{a.title}</span>
               </div>
             )
           })}

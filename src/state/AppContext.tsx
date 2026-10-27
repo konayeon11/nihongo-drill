@@ -21,7 +21,15 @@ import {
   type Snapshot,
 } from '../lib/db'
 import { newProgress, schedule } from '../lib/srs'
-import { XP_CORRECT, XP_GOAL_BONUS, XP_GRADUATE, XP_WRONG, bumpStreak, emptyLog } from '../lib/gamify'
+import {
+  XP_CORRECT,
+  XP_GOAL_BONUS,
+  XP_GRADUATE,
+  XP_WRONG,
+  applyStreakFreeze,
+  bumpStreak,
+  emptyLog,
+} from '../lib/gamify'
 import { today } from '../lib/date'
 
 export interface SessionSummary {
@@ -38,6 +46,8 @@ interface AppState {
   user: UserState
   favorites: string[]
   lastSession: SessionSummary | null
+  /** 방금 앱을 열었을 때 방어권으로 스트릭을 지켰다면 true (홈에서 한 번 안내하고 끔) */
+  freezeNotice: boolean
 }
 
 export interface AnswerResult {
@@ -56,6 +66,7 @@ interface AppApi extends AppState {
   wipe: () => Promise<void>
   download: () => Promise<void>
   restore: (file: File) => Promise<void>
+  dismissFreezeNotice: () => void
 }
 
 const initial: AppState = {
@@ -65,6 +76,7 @@ const initial: AppState = {
   user: DEFAULT_USER,
   favorites: [],
   lastSession: null,
+  freezeNotice: false,
 }
 
 const Ctx = createContext<AppApi | null>(null)
@@ -83,7 +95,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true
     loadSnapshot().then((snap) => {
-      if (alive) apply({ ...ref.current, ...snap, ready: true })
+      if (!alive) return
+      const { user, used } = applyStreakFreeze(snap.user)
+      if (used) void saveUser(user)
+      apply({ ...ref.current, ...snap, user, ready: true, freezeNotice: used })
     })
     return () => {
       alive = false
@@ -187,6 +202,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [apply],
   )
 
+  const dismissFreezeNotice = useCallback(() => {
+    apply({ ...ref.current, freezeNotice: false })
+  }, [apply])
+
   const day = today()
   const value: AppApi = {
     ...state,
@@ -198,6 +217,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     wipe,
     download,
     restore,
+    dismissFreezeNotice,
   }
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

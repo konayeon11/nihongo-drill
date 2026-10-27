@@ -7,9 +7,10 @@ import { deckStats, newBudget } from '../lib/session'
 import { Link, navigate } from '../router'
 import { useApp } from '../state/AppContext'
 import { ProgressRing } from '../components/ProgressRing'
+import { Mascot, type MascotStage } from '../components/Mascot'
 
 export function Home() {
-  const { user, progress, dayLogs, todayLog } = useApp()
+  const { user, progress, dayLogs, todayLog, freezeNotice, dismissFreezeNotice } = useApp()
   const day = today()
 
   const stats = useMemo(() => deckStats(progress, day), [progress, day])
@@ -24,6 +25,14 @@ export function Home() {
 
   const goalRatio = todayLog.reviews / Math.max(1, user.dailyGoal)
   const week = Array.from({ length: 7 }, (_, i) => addDays(day, -(6 - i)))
+
+  const mascotStage: MascotStage = lvl.level >= 10 ? 4 : lvl.level >= 6 ? 3 : lvl.level >= 3 ? 2 : 1
+  const mascotMood = todayLog.goalMet ? 'happy' : todayLog.reviews > 0 ? 'neutral' : 'hungry'
+  const mascotLine = todayLog.goalMet
+    ? '오늘 밥 다 먹었어요! 배불러요 🍚'
+    : todayLog.reviews > 0
+      ? '조금만 더 먹여주세요!'
+      : '배고파요... 오늘 아직 안 먹었어요'
 
   const courseProgress = useMemo(
     () =>
@@ -40,6 +49,12 @@ export function Home() {
 
   return (
     <div className="screen">
+      {freezeNotice && (
+        <div className="notice notice--freeze" onClick={dismissFreezeNotice}>
+          🛡️ 어제는 쉬었지만 스트릭 방어권으로 연속 기록을 지켰어요!
+        </div>
+      )}
+
       <header className="home-top">
         <div>
           <p className="eyebrow">일본어 학습</p>
@@ -47,14 +62,24 @@ export function Home() {
         </div>
         <div className="badges">
           <span className={atRisk ? 'badge badge--flame is-risk' : 'badge badge--flame'}>
-            🔥 {streak}일
+            <span className="flame-ico">🔥</span> {streak}일
           </span>
-          <span className="badge">Lv.{lvl.level}</span>
+          {user.streakFreezes > 0 && (
+            <span className="badge badge--freeze" title="스트릭 방어권">
+              🛡️ {user.streakFreezes}
+            </span>
+          )}
+          <span className="badge badge--gold">Lv.{lvl.level}</span>
         </div>
       </header>
 
+      <div className="mascot-stage">
+        <Mascot stage={mascotStage} mood={mascotMood} size={150} />
+        <div className="mascot-bubble">{mascotLine}</div>
+      </div>
+
       <section className="card card--goal">
-        <ProgressRing ratio={goalRatio} tone={todayLog.goalMet ? 'flame' : 'primary'}>
+        <ProgressRing ratio={goalRatio} tone="hero" className="ring--hero">
           <strong className="ring-num">{todayLog.reviews}</strong>
           <span className="ring-sub">/ {user.dailyGoal}문제</span>
         </ProgressRing>

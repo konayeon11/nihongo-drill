@@ -151,6 +151,8 @@ export interface UserState {
   tts: boolean
   /** 한글 발음 표기 항상 보이기 */
   showKr: boolean
+  /** 스트릭 방어권 보유 개수 (하루 쉬어도 자동으로 스트릭을 지켜줌) */
+  streakFreezes: number
   createdAt: string
 }
 

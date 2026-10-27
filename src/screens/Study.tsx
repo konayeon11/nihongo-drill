@@ -221,7 +221,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
         <span className="qprompt">{TYPE_PROMPT[q.type]}</span>
       </div>
 
-      <div className="qbody">
+      <div className="qbody" key={index}>
         {q.type === 'listen' ? (
           <div className="listen-box">
             <button className="speak speak--huge" onClick={() => speak(q.card.ttsText)} aria-label="다시 듣기">

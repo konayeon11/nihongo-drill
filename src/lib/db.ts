@@ -23,6 +23,7 @@ export const DEFAULT_USER: UserState = {
   enabledDecks: [...ALL_DECKS],
   tts: true,
   showKr: true,
+  streakFreezes: 1,
   createdAt: today(),
 }
 
