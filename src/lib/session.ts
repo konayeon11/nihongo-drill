@@ -89,6 +89,8 @@ export interface QueueOptions {
   deck?: Deck
   /** 복습 기한과 무관하게 특정 카드만 연습 */
   cardIds?: string[]
+  /** 하루 신규 카드 한도를 오늘만 임시로 늘려서 더 꺼내온다 (설정값 자체는 바뀌지 않음) */
+  extraNew?: number
 }
 
 export function buildQueue(opts: QueueOptions): QuizQuestion[] {
@@ -103,12 +105,23 @@ export function buildQueue(opts: QueueOptions): QuizQuestion[] {
     picked = shuffle(allCards.filter((c) => set.has(c.id))).slice(0, size)
   } else {
     const review = shuffle(dueCards(progress, decks, ref))
-    const budget = Math.min(newBudget(user, newLearnedToday), size)
+    const effectiveUser = opts.extraNew ? { ...user, newPerDay: user.newPerDay + opts.extraNew } : user
+    const budget = Math.min(newBudget(effectiveUser, newLearnedToday), size)
     const fresh = shuffle(freshCards(progress, decks)).slice(0, budget)
     picked = interleave(review, fresh).slice(0, size)
   }
 
   return picked.map((card) => makeQuestion(card, progress[card.id]))
+}
+
+/** 오늘 더 꺼내올 수 있는 신규 카드가 남아 있는지 (한도 때문에 못 꺼내온 것인지 판단용) */
+export function hasMoreFreshBeyondBudget(
+  progress: ProgressMap,
+  user: UserState,
+  deck?: Deck,
+): boolean {
+  const decks = deck ? [deck] : user.enabledDecks.length ? user.enabledDecks : ALL_DECKS
+  return freshCards(progress, decks).length > 0
 }
 
 // ── 문제 생성 ────────────────────────────────────

@@ -245,4 +245,10 @@ export const kanji: KanjiItem[] = [
   { id: 'k-213', char: '活', meaning: '살다', on: ['カツ'], kun: [], strokes: 9, level: 'N4', theme: 'N4', examples: [{ jp: '生活', kana: 'せいかつ', ko: '생활' }] },
   { id: 'k-214', char: '音', meaning: '소리', on: ['オン', 'イン'], kun: ['おと'], strokes: 9, level: 'N4', theme: 'N4', examples: [{ jp: '音楽', kana: 'おんがく', ko: '음악' }] },
   { id: 'k-215', char: '楽', meaning: '즐겁다, 음악', on: ['ガク', 'ラク'], kun: ['たの(しい)'], strokes: 13, level: 'N4', theme: 'N4', examples: [{ jp: '音楽', kana: 'おんがく', ko: '음악' }, { jp: '楽しい', kana: 'たのしい', ko: '즐겁다' }] },
+
+  // ── 메뉴판·장보기에서 자주 보는 한자 ────────────
+  { id: 'k-216', char: '丼', meaning: '덮밥', on: ['トン'], kun: ['どんぶり', 'どん'], strokes: 5, level: 'travel', theme: '음식메뉴', examples: [{ jp: '牛丼', kana: 'ぎゅうどん', ko: '규동' }], signNote: '메뉴판에서 ◯◯丼은 "◯◯덮밥"이라는 뜻입니다.' },
+  { id: 'k-217', char: '麺', meaning: '국수, 면', on: ['メン'], kun: [], strokes: 16, level: 'travel', theme: '음식메뉴', examples: [{ jp: 'ラーメン', kana: 'らーめん', ko: '라멘' }, { jp: 'カップ麺', kana: 'かっぷめん', ko: '컵라면' }] },
+  { id: 'k-218', char: '酒', meaning: '술', on: ['シュ'], kun: ['さけ', 'さか'], strokes: 10, level: 'travel', theme: '음식메뉴', examples: [{ jp: '日本酒', kana: 'にほんしゅ', ko: '니혼슈' }], signNote: '"酒屋"는 술 파는 가게, "居酒屋"는 선술집입니다.' },
+  { id: 'k-219', char: '薬', meaning: '약', on: ['ヤク'], kun: ['くすり'], strokes: 16, level: 'travel', theme: '생활용품', examples: [{ jp: '薬', kana: 'くすり', ko: '약' }, { jp: '薬局', kana: 'やっきょく', ko: '약국' }], signNote: '"薬局"은 약국 표지판에서 흔히 보입니다.' },
 ]

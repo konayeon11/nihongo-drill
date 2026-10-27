@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Deck, Grade, QuizQuestion, SessionAnswer } from '../types'
 import { DECK_LABEL, findSource } from '../data/cards'
 import { unitOf, unitTitleByCard } from '../data/units'
-import { TYPE_PROMPT, buildQueue, makeQuestion } from '../lib/session'
+import { TYPE_PROMPT, buildQueue, hasMoreFreshBeyondBudget, makeQuestion } from '../lib/session'
 import { fuzzyMatchKo, kanaEqual } from '../lib/match'
 import { intervalLabel } from '../lib/srs'
 import { speak, ttsSupported } from '../lib/tts'
@@ -31,6 +31,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
 
   const [queue, setQueue] = useState<QuizQuestion[]>([])
   const [empty, setEmpty] = useState(false)
+  const [extraNew, setExtraNew] = useState(0)
   const [index, setIndex] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [picked, setPicked] = useState<string | null>(null)
@@ -46,7 +47,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
 
   // 세션은 진입 시점에 한 번만 구성한다 (답을 맞힐 때마다 재구성되면 안 된다)
   useEffect(() => {
-    const q = buildQueue({
+    const built = buildQueue({
       progress,
       user,
       newLearnedToday: todayLog.newLearned,
@@ -54,11 +55,28 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
       cardIds: unit?.cardIds,
       size: unit ? Math.min(40, unit.cardIds.length) : undefined,
     })
-    planned.current = q.length
-    setQueue(q)
-    if (q.length === 0) setEmpty(true)
+    planned.current = built.length
+    setQueue(built)
+    if (built.length === 0) setEmpty(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const loadMore = useCallback(() => {
+    const extra = extraNew + 10
+    const built = buildQueue({
+      progress,
+      user,
+      newLearnedToday: todayLog.newLearned,
+      deck: deck as Deck | undefined,
+      extraNew: extra,
+    })
+    setExtraNew(extra)
+    planned.current = built.length
+    setQueue(built)
+    setIndex(0)
+    setEmpty(built.length === 0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extraNew])
 
   const q = queue[index]
 
@@ -128,16 +146,23 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
   }, [index, queue.length, finishSession])
 
   if (empty) {
+    const canLoadMore = !unit && hasMoreFreshBeyondBudget(progress, user, deck as Deck | undefined)
     return (
       <div className="screen">
         <p className="result-emoji">🙌</p>
         <h1 className="page-title">이 범위는 오늘 다 끝냈어요</h1>
         <p className="hint">
-          복습 예정일이 아직 안 됐거나, 하루 신규 카드 수를 이미 다 썼을 수 있어요. 설정에서
-          &lsquo;하루 신규 카드 수&rsquo;를 늘리면 더 꺼내올 수 있습니다.
+          {canLoadMore
+            ? '하루 신규 카드 수(설정값)를 다 썼어요. 더 하고 싶으면 아래에서 오늘만 10개씩 추가로 꺼내올 수 있어요.'
+            : '복습 예정일이 아직 안 됐어요. 내일 다시 와주세요.'}
         </p>
+        {canLoadMore && (
+          <button className="btn btn--primary btn--lg" onClick={loadMore}>
+            신규 카드 10개 더 학습하기
+          </button>
+        )}
         <div className="btn-row">
-          <button className="btn btn--primary" onClick={() => navigate('/', true)}>
+          <button className="btn btn--ghost" onClick={() => navigate('/', true)}>
             홈으로
           </button>
           <button className="btn btn--ghost" onClick={() => navigate('/settings')}>

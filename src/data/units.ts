@@ -193,6 +193,30 @@ export const units: Unit[] = [
     icon: '🚻',
     cardIds: signKanjiIds,
   },
+  {
+    id: 'u-travel-12',
+    course: 'travel',
+    title: '음식 메뉴',
+    subtitle: '덮밥·면·구이 요리 이름',
+    icon: '🍱',
+    cardIds: [...byTheme(words, '음식메뉴'), 'k-216', 'k-217', 'k-218'],
+  },
+  {
+    id: 'u-travel-13',
+    course: 'travel',
+    title: '조미료·장보기',
+    subtitle: '마트·편의점에서 쓰는 말',
+    icon: '🛒',
+    cardIds: [...byTheme(words, '장보기'), ...bySituation('장보기')],
+  },
+  {
+    id: 'u-travel-14',
+    course: 'travel',
+    title: '생활·편의용품',
+    subtitle: '세면용품·비상용품',
+    icon: '🧴',
+    cardIds: [...byTheme(words, '생활용품'), 'k-219'],
+  },
 
   // ── 취미 생활 ───────────────────────────────
   {
