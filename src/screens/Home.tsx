@@ -107,12 +107,8 @@ export function Home() {
         </div>
       </section>
 
-      <button
-        className="btn btn--primary btn--lg"
-        onClick={() => navigate('/study')}
-        disabled={available === 0}
-      >
-        {available === 0 ? '오늘 복습은 모두 끝났어요' : `학습 시작 · ${available}문제`}
+      <button className="btn btn--primary btn--lg" onClick={() => navigate('/study')}>
+        {available === 0 ? '오늘 복습은 모두 끝났어요 (더 학습하기)' : `학습 시작 · ${available}문제`}
       </button>
       {available === 0 && freshTotal > 0 && (
         <p className="hint">
