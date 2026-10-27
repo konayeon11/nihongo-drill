@@ -1,0 +1,348 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Deck, Grade, QuizQuestion, SessionAnswer } from '../types'
+import { DECK_LABEL, findSource } from '../data/cards'
+import { unitOf } from '../data/units'
+import { TYPE_PROMPT, buildQueue, makeQuestion } from '../lib/session'
+import { fuzzyMatchKo, kanaEqual } from '../lib/match'
+import { intervalLabel } from '../lib/srs'
+import { speak, ttsSupported } from '../lib/tts'
+import { navigate } from '../router'
+import { useApp } from '../state/AppContext'
+import { SpeakButton } from '../components/SpeakButton'
+import { KanaKeypad } from '../components/KanaKeypad'
+
+const MAX_REQUEUE = 2
+
+interface Feedback {
+  correct: boolean
+  grade: Grade
+  xp: number
+  nextIn: number
+}
+
+export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
+  const app = useApp()
+  const { answer, finishSession, progress, user, todayLog } = app
+  const unit = unitId ? unitOf(unitId) : undefined
+
+  const [queue, setQueue] = useState<QuizQuestion[]>([])
+  const [index, setIndex] = useState(0)
+  const [revealed, setRevealed] = useState(false)
+  const [picked, setPicked] = useState<string | null>(null)
+  const [typed, setTyped] = useState('')
+  const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const answersRef = useRef<SessionAnswer[]>([])
+  const xpRef = useRef(0)
+  const goalRef = useRef(false)
+  const requeues = useRef<Record<string, number>>({})
+  const startedAt = useRef(Date.now())
+  const planned = useRef(0)
+
+  // 세션은 진입 시점에 한 번만 구성한다 (답을 맞힐 때마다 재구성되면 안 된다)
+  useEffect(() => {
+    const q = buildQueue({
+      progress,
+      user,
+      newLearnedToday: todayLog.newLearned,
+      deck: deck as Deck | undefined,
+      cardIds: unit?.cardIds,
+      size: unit ? Math.min(40, unit.cardIds.length) : undefined,
+    })
+    planned.current = q.length
+    setQueue(q)
+    if (q.length === 0) navigate('/', true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const q = queue[index]
+
+  useEffect(() => {
+    if (q?.type === 'listen' && user.tts && ttsSupported()) speak(q.card.ttsText)
+  }, [q, user.tts])
+
+  const source = useMemo(() => (q ? findSource(q.card.id) : null), [q])
+
+  const example = useMemo(() => {
+    if (!source?.item) return null
+    const item = source.item as { example?: { jp: string; kana: string; ko: string }; examples?: { jp: string; kana: string; ko: string }[] }
+    return item.example ?? item.examples?.[0] ?? null
+  }, [source])
+
+  const commit = useCallback(
+    (grade: Grade, correct: boolean) => {
+      if (!q || feedback) return
+      const res = answer(q.card, grade)
+      answersRef.current.push({
+        cardId: q.card.id,
+        deck: q.card.deck,
+        correct,
+        grade,
+        isNew: q.isNew,
+      })
+      xpRef.current += res.xp
+      if (res.goalMetNow) goalRef.current = true
+
+      if (grade === 0) {
+        const used = requeues.current[q.card.id] ?? 0
+        if (used < MAX_REQUEUE) {
+          requeues.current[q.card.id] = used + 1
+          setQueue((prev) => [...prev, makeQuestion(q.card, res.progress)])
+        }
+      }
+
+      setFeedback({ correct, grade, xp: res.xp, nextIn: res.progress.interval })
+    },
+    [answer, feedback, q],
+  )
+
+  const next = useCallback(() => {
+    if (index + 1 >= queue.length) {
+      finishSession({
+        answers: answersRef.current,
+        xpGained: xpRef.current,
+        goalMetNow: goalRef.current,
+        startedAt: startedAt.current,
+      })
+      navigate('/result', true)
+      return
+    }
+    setFeedback(null)
+    setPicked(null)
+    setTyped('')
+    setRevealed(false)
+    setIndex(index + 1)
+  }, [index, queue.length, finishSession])
+
+  if (!q) return <div className="screen"><p className="hint">세션을 준비하고 있어요…</p></div>
+
+  const total = Math.max(queue.length, planned.current)
+  const isChoice = q.type === 'choice-jp-ko' || q.type === 'choice-ko-jp' || q.type === 'listen' || q.type === 'cloze'
+
+  const onPick = (choice: string) => {
+    if (feedback) return
+    setPicked(choice)
+    commit(choice === q.answer ? 2 : 0, choice === q.answer)
+  }
+
+  const onSubmitTyping = () => {
+    if (feedback || !typed.trim()) return
+    const ok =
+      q.type === 'typing-meaning'
+        ? fuzzyMatchKo(typed, q.answer ?? '')
+        : q.type === 'typing-romaji'
+          ? typed.trim().toLowerCase() === (q.answer ?? '').toLowerCase()
+          : kanaEqual(typed, q.answer ?? '')
+    commit(ok ? 2 : 0, ok)
+  }
+
+  const showReading =
+    (q.type === 'flashcard' ? revealed : true) && q.card.deck !== 'kanji' && q.type !== 'typing-kana'
+
+  return (
+    <div className="screen screen--study">
+      <div className="study-head">
+        <button className="icon-btn" onClick={() => navigate('/')} aria-label="학습 종료">
+          ✕
+        </button>
+        <div className="progress">
+          <span style={{ width: `${(index / total) * 100}%` }} />
+        </div>
+        <span className="study-count">
+          {index + 1}/{total}
+        </span>
+      </div>
+
+      <div className="qmeta">
+        <span className="chip">{DECK_LABEL[q.card.deck]}</span>
+        {q.isNew && <span className="chip chip--new">새 카드</span>}
+        <span className="qprompt">{TYPE_PROMPT[q.type]}</span>
+      </div>
+
+      <div className="qbody">
+        {q.type === 'listen' ? (
+          <div className="listen-box">
+            <button className="speak speak--huge" onClick={() => speak(q.card.ttsText)} aria-label="다시 듣기">
+              🔊
+            </button>
+            {feedback && (
+              <>
+                <p className="jp jp--md">{q.card.front}</p>
+                <p className="reading">{q.card.reading}</p>
+              </>
+            )}
+          </div>
+        ) : q.type === 'cloze' ? (
+          <p className="jp jp--sm">{q.prompt}</p>
+        ) : q.type === 'choice-ko-jp' ? (
+          <p className="ko-prompt">{q.card.back}</p>
+        ) : (
+          <>
+            <p className={q.card.front.length > 8 ? 'jp jp--sm' : 'jp'}>{q.card.front}</p>
+            {showReading && (
+              <p className="reading">
+                {q.card.reading}
+                {user.showKr && q.card.kr && q.card.deck !== 'kana' && (
+                  <span className="kr"> · {q.card.kr}</span>
+                )}
+              </p>
+            )}
+            {q.type !== 'typing-kana' && q.card.deck !== 'kana' && <SpeakButton text={q.card.ttsText} />}
+          </>
+        )}
+
+        {q.type === 'flashcard' && revealed && (
+          <div className="reveal">
+            {q.card.deck === 'kanji' && (
+              <p className="reading reading--block">
+                {q.card.reading}
+                {user.showKr && q.card.kr && <span className="kr"> · {q.card.kr}</span>}
+              </p>
+            )}
+            <p className="meaning">{q.card.back}</p>
+            {q.card.sub && q.card.deck === 'grammar' && <p className="formation">{q.card.reading}</p>}
+            {example && (
+              <div className="example">
+                <p className="example-jp">{example.jp}</p>
+                <p className="example-kana">{example.kana}</p>
+                <p className="example-ko">{example.ko}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {isChoice && (
+        <div className="choices">
+          {q.choices?.map((c) => {
+            const isAnswer = c === q.answer
+            const state = !feedback ? '' : isAnswer ? ' is-right' : c === picked ? ' is-wrong' : ' is-dim'
+            return (
+              <button key={c} className={`choice${state}`} onClick={() => onPick(c)} disabled={!!feedback}>
+                {c}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {q.type === 'typing-kana' && (
+        <div className="typing">
+          <input
+            className="input input--kana"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && onSubmitTyping()}
+            placeholder="ひらがな"
+            autoComplete="off"
+            autoCapitalize="off"
+            disabled={!!feedback}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+          />
+          {!feedback && <KanaKeypad value={typed} onChange={setTyped} />}
+          {!feedback && (
+            <button className="btn btn--primary" onClick={onSubmitTyping} disabled={!typed.trim()}>
+              확인
+            </button>
+          )}
+        </div>
+      )}
+
+      {q.type === 'typing-romaji' && (
+        <div className="typing">
+          <input
+            className="input input--kana"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && onSubmitTyping()}
+            placeholder="romaji"
+            autoComplete="off"
+            autoCapitalize="off"
+            disabled={!!feedback}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+          />
+          {!feedback && (
+            <button className="btn btn--primary btn--lg" onClick={onSubmitTyping} disabled={!typed.trim()}>
+              확인
+            </button>
+          )}
+        </div>
+      )}
+
+      {q.type === 'typing-meaning' && (
+        <div className="typing">
+          <input
+            className="input"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && onSubmitTyping()}
+            placeholder="한글로 뜻을 입력하세요"
+            autoComplete="off"
+            disabled={!!feedback}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+          />
+          {!feedback && (
+            <button className="btn btn--primary btn--lg" onClick={onSubmitTyping} disabled={!typed.trim()}>
+              확인
+            </button>
+          )}
+        </div>
+      )}
+
+      {q.type === 'flashcard' && !revealed && (
+        <button className="btn btn--primary btn--lg" onClick={() => setRevealed(true)}>
+          {q.isNew ? '뜻 확인하기' : '뜻 보기'}
+        </button>
+      )}
+
+      {q.type === 'flashcard' && revealed && !feedback && q.isNew && (
+        <button className="btn btn--primary btn--lg" onClick={() => commit(2, true)}>
+          외웠어요 · 다음
+        </button>
+      )}
+
+      {q.type === 'flashcard' && revealed && !feedback && !q.isNew && (
+        <div className="grades">
+          <button className="grade grade--again" onClick={() => commit(0, false)}>
+            다시
+            <small>곧 다시</small>
+          </button>
+          <button className="grade grade--hard" onClick={() => commit(1, true)}>
+            어려움
+          </button>
+          <button className="grade grade--good" onClick={() => commit(2, true)}>
+            좋음
+          </button>
+          <button className="grade grade--easy" onClick={() => commit(3, true)}>
+            쉬움
+          </button>
+        </div>
+      )}
+
+      {feedback && (
+        <div className={feedback.correct ? 'feedback is-right' : 'feedback is-wrong'}>
+          <div className="feedback-main">
+            <strong>{feedback.correct ? '정답!' : '아쉬워요'}</strong>
+            <span className="feedback-xp">+{feedback.xp} XP</span>
+          </div>
+          {!feedback.correct && (
+            <p className="feedback-answer">
+              {q.card.front}
+              {q.card.reading && q.card.deck !== 'grammar' ? ` (${q.card.reading}` : ''}
+              {q.card.reading && q.card.deck !== 'grammar' && user.showKr && q.card.kr && q.card.deck !== 'kana'
+                ? ` · ${q.card.kr}`
+                : ''}
+              {q.card.reading && q.card.deck !== 'grammar' ? ')' : ''} — {q.card.back}
+            </p>
+          )}
+          <p className="feedback-next">다음 복습: {intervalLabel(feedback.nextIn)}</p>
+          <button className="btn btn--primary btn--lg" onClick={next}>
+            계속
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
