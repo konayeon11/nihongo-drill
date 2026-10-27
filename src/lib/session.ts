@@ -139,8 +139,9 @@ function typesFor(card: Card, reps: number): QuizType[] {
       if (reps === 1) return ['choice-jp-ko', 'choice-ko-jp']
       return ['typing-meaning', 'typing-meaning', 'choice-jp-ko', 'listen']
     case 'phrase':
+      // 문장은 통째로 외워 타이핑하기보다 듣기·선택형으로 인식하는 게 맞는 난이도다.
       if (reps === 1) return ['choice-jp-ko', 'listen']
-      return ['typing-meaning', 'choice-jp-ko', 'listen']
+      return ['choice-jp-ko', 'listen', 'listen', 'flashcard']
     case 'grammar':
       // 문법 패턴명은 사람마다 표현이 달라 타이핑 채점이 애매하므로 선택형 위주로 유지
       return reps === 1 ? ['cloze', 'choice-ko-jp'] : ['cloze', 'choice-ko-jp', 'flashcard']
