@@ -30,6 +30,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
   const unit = unitId ? unitOf(unitId) : undefined
 
   const [queue, setQueue] = useState<QuizQuestion[]>([])
+  const [empty, setEmpty] = useState(false)
   const [index, setIndex] = useState(0)
   const [revealed, setRevealed] = useState(false)
   const [picked, setPicked] = useState<string | null>(null)
@@ -55,7 +56,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
     })
     planned.current = q.length
     setQueue(q)
-    if (q.length === 0) navigate('/', true)
+    if (q.length === 0) setEmpty(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -125,6 +126,27 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
     setRevealed(false)
     setIndex(index + 1)
   }, [index, queue.length, finishSession])
+
+  if (empty) {
+    return (
+      <div className="screen">
+        <p className="result-emoji">🙌</p>
+        <h1 className="page-title">이 범위는 오늘 다 끝냈어요</h1>
+        <p className="hint">
+          복습 예정일이 아직 안 됐거나, 하루 신규 카드 수를 이미 다 썼을 수 있어요. 설정에서
+          &lsquo;하루 신규 카드 수&rsquo;를 늘리면 더 꺼내올 수 있습니다.
+        </p>
+        <div className="btn-row">
+          <button className="btn btn--primary" onClick={() => navigate('/', true)}>
+            홈으로
+          </button>
+          <button className="btn btn--ghost" onClick={() => navigate('/settings')}>
+            설정으로
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (!q) return <div className="screen"><p className="hint">세션을 준비하고 있어요…</p></div>
 

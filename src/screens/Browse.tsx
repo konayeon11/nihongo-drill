@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { Deck } from '../types'
 import { ALL_DECKS, DECK_LABEL, cardsByDeck } from '../data/cards'
 import { MASTERY_LABEL, mastery } from '../lib/srs'
-import { Link } from '../router'
+import { Link, navigate } from '../router'
 import { useApp } from '../state/AppContext'
 
 export function Browse() {
@@ -31,6 +31,10 @@ export function Browse() {
           </button>
         ))}
       </div>
+
+      <button className="btn btn--primary" onClick={() => navigate(`/study?deck=${deck}`)}>
+        {DECK_LABEL[deck]}만 학습 시작
+      </button>
 
       <div className="search-row">
         <input
