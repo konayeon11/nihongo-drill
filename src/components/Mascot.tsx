@@ -18,7 +18,7 @@ const MOOD_LABEL: Record<MascotMood, string> = { happy: '행복', neutral: '보�
  * stage: 레벨에 따른 성장 단계(1~4), mood: 오늘 학습 여부에 따른 표정.
  */
 export function Mascot({ stage, mood, size = 180 }: Props) {
-  const src = `/assets/mascot/stage${stage}-${mood}.png`
+  const src = `${import.meta.env.BASE_URL}assets/mascot/stage${stage}-${mood}.png`
 
   return (
     <div
