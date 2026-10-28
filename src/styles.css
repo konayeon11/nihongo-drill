@@ -485,7 +485,6 @@ input {
   display: block;
 }
 
-.mascot--happy g > path,
 .mascot--happy {
   animation: fadeUp 0.4s ease;
 }
