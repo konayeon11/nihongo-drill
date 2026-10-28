@@ -1,3 +1,4 @@
+import { BookOpen, MessageCircle, PenTool, Puzzle, Type, type LucideIcon } from 'lucide-react'
 import type { Card, Deck } from '../types'
 import { toKorean } from '../lib/romanize'
 import { kana } from './kana'
@@ -16,12 +17,12 @@ export const DECK_LABEL: Record<Deck, string> = {
   phrase: '회화',
 }
 
-export const DECK_ICON: Record<Deck, string> = {
-  kana: 'あ',
-  word: '語',
-  kanji: '漢',
-  grammar: '文',
-  phrase: '話',
+export const DECK_ICON: Record<Deck, LucideIcon> = {
+  kana: Type,
+  word: BookOpen,
+  kanji: PenTool,
+  grammar: Puzzle,
+  phrase: MessageCircle,
 }
 
 export const ALL_DECKS: Deck[] = ['kana', 'word', 'kanji', 'grammar', 'phrase']

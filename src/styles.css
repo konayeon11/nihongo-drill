@@ -26,6 +26,13 @@
   --grad-flame: linear-gradient(135deg, var(--gold), var(--flame), var(--flame-2));
   --grad-hero: linear-gradient(160deg, #6a5cf5 0%, #4f46e5 46%, #3f2fd1 100%);
   color-scheme: light;
+
+  /* UI 제목·버튼·라벨용 (상용 서비스 느낌의 폰트) */
+  --font-display: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
+    'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  /* 일본어 글자·읽는 법·뜻처럼 오독되면 안 되는 학습 콘텐츠용 (기존 폰트 유지) */
+  --font-legible: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', 'Apple SD Gothic Neo',
+    'Malgun Gothic', system-ui, -apple-system, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -104,8 +111,7 @@ body {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', 'Apple SD Gothic Neo',
-    'Malgun Gothic', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-display);
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -115,6 +121,30 @@ button,
 input {
   font: inherit;
   color: inherit;
+}
+
+/* 일본어 글자·읽는 법·한글 발음·뜻·예문처럼 정확히 읽혀야 하는 학습 콘텐츠는
+   장식적인 UI 폰트 대신 기존 가독성 위주 폰트를 그대로 쓴다. */
+.jp,
+.jp--md,
+.jp--sm,
+.ko-prompt,
+.reading,
+.reading--block,
+.kr,
+.meaning,
+.formation,
+.example-jp,
+.example-kana,
+.example-ko,
+.body,
+.input,
+.input--kana,
+.feedback-answer,
+.confuse-char,
+.confuse-note,
+.key {
+  font-family: var(--font-legible);
 }
 
 .app {
@@ -879,8 +909,6 @@ input {
   height: 34px;
   border-radius: 10px;
   background: var(--primary-soft);
-  font-size: 16px;
-  font-weight: 800;
   color: var(--primary);
   display: grid;
   place-items: center;

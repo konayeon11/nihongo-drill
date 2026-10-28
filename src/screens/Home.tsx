@@ -157,13 +157,16 @@ export function Home() {
           const s = stats[deck]
           const ratio = s.learned / s.total
           const on = user.enabledDecks.includes(deck)
+          const Icon = DECK_ICON[deck]
           return (
             <button
               key={deck}
               className={on ? 'deck' : 'deck is-off'}
               onClick={() => navigate(`/study?deck=${deck}`)}
             >
-              <span className="deck-ico">{DECK_ICON[deck]}</span>
+              <span className="deck-ico">
+                <Icon size={18} strokeWidth={2.25} />
+              </span>
               <span className="deck-name">{DECK_LABEL[deck]}</span>
               <span className="deck-count">
                 {s.learned} / {s.total}
