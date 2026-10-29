@@ -36,7 +36,7 @@ function levenshtein(a: string, b: string): number {
 /**
  * 한글 뜻 타이핑 채점.
  * 정답에 "크다, 비싸다"처럼 쉼표로 여러 뜻이 적혀 있으면 그중 하나만 맞아도 정답.
- * 짧은 단어는 정확히, 긴 단어는 오타 1~2글자까지 허용한다.
+ * 한 글자짜리 답만 정확히 일치해야 하고, 나머지는 오타 1~2글자까지 허용한다.
  */
 export function fuzzyMatchKo(input: string, answer: string): boolean {
   const norm = normalizeKo(input)
@@ -48,7 +48,7 @@ export function fuzzyMatchKo(input: string, answer: string): boolean {
 
   for (const t of targets) {
     if (norm === t) return true
-    const tolerance = t.length >= 8 ? 2 : t.length >= 4 ? 1 : 0
+    const tolerance = t.length >= 8 ? 2 : t.length >= 2 ? 1 : 0
     if (levenshtein(norm, t) <= tolerance) return true
   }
   return false
