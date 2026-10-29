@@ -3,7 +3,7 @@ import type { Deck, Grade, QuizQuestion, SessionAnswer } from '../types'
 import { DECK_LABEL, findSource } from '../data/cards'
 import { unitOf, unitTitleByCard } from '../data/units'
 import { TYPE_PROMPT, buildQueue, hasMoreFreshBeyondBudget, makeQuestion } from '../lib/session'
-import { fuzzyMatchKo } from '../lib/match'
+import { fuzzyMatchKo, kanaEqual } from '../lib/match'
 import { intervalLabel } from '../lib/srs'
 import { speak, ttsSupported } from '../lib/tts'
 import { navigate } from '../router'
@@ -192,11 +192,16 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
 
   const onSubmitTyping = () => {
     if (feedback || !typed.trim()) return
-    const ok = fuzzyMatchKo(typed, q.answer ?? '')
+    const ok =
+      q.type === 'typing-meaning'
+        ? fuzzyMatchKo(typed, q.answer ?? '')
+        // 음성 키보드로 입력하면 가나 대신 한자 그대로 변환되는 경우가 있어, 원문 한자 표기도 정답으로 인정한다.
+        : kanaEqual(typed, q.answer ?? '') || typed.trim() === q.card.front
     commit(ok ? 2 : 0, ok)
   }
 
-  const showReading = (q.type === 'flashcard' ? revealed : true) && q.card.deck !== 'kanji'
+  const showReading =
+    (q.type === 'flashcard' ? revealed : true) && q.card.deck !== 'kanji' && q.type !== 'typing-kana'
 
   return (
     <div className="screen screen--study">
@@ -249,7 +254,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
                 )}
               </p>
             )}
-            {q.card.deck !== 'kana' && <SpeakButton text={q.card.ttsText} />}
+            {q.type !== 'typing-kana' && q.card.deck !== 'kana' && <SpeakButton text={q.card.ttsText} />}
           </>
         )}
 
@@ -285,6 +290,28 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
               </button>
             )
           })}
+        </div>
+      )}
+
+      {q.type === 'typing-kana' && (
+        <div className="typing">
+          <input
+            className="input input--kana"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && onSubmitTyping()}
+            placeholder="ひらがな"
+            autoComplete="off"
+            autoCapitalize="off"
+            disabled={!!feedback}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+          />
+          {!feedback && (
+            <button className="btn btn--primary btn--lg" onClick={onSubmitTyping} disabled={!typed.trim()}>
+              확인
+            </button>
+          )}
         </div>
       )}
 

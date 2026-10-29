@@ -139,6 +139,7 @@ input {
 .example-ko,
 .body,
 .input,
+.input--kana,
 .feedback-answer,
 .confuse-char,
 .confuse-note {
@@ -1229,6 +1230,11 @@ input {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.input--kana {
+  font-size: 22px;
+  text-align: center;
 }
 
 .grades {

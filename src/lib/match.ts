@@ -1,8 +1,22 @@
 /**
  * 답안 채점용 비교 유틸.
  * 타이핑 테스트는 자기평가보다 효과적이지만, 오타 하나로 오답 처리되면
- * 좌절감을 주므로 한글 뜻은 약간의 오타를 허용한다.
+ * 좌절감을 주므로 가나는 정규화 후 정확히, 한글 뜻은 약간의 오타를 허용한다.
  */
+
+const normalizeKanaMap = (s: string) =>
+  s.replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60))
+
+/** 가나 비교용 정규화: 가타카나 → 히라가나, 공백·기호 제거 */
+export function normalizeKana(s: string): string {
+  return normalizeKanaMap(s.trim())
+    .replace(/[\s・ー~〜\-。、]/g, '')
+    .toLowerCase()
+}
+
+export function kanaEqual(input: string, answer: string): boolean {
+  return normalizeKana(input) === normalizeKana(answer)
+}
 
 function normalizeKo(s: string): string {
   return s
