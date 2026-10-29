@@ -3,11 +3,8 @@ import { toRomaji } from '../lib/romanize'
 
 let seq = 0
 
-/** public/assets/hiragana/ 에 연상 이미지가 없는 히라가나 */
+/** public/assets/hiragana|katakana/ 에 연상 이미지가 없는 글자 */
 const NO_MNEMONIC_IMAGE = new Set<string>([])
-
-/** public/assets/katakana/ 에 연상 이미지가 있는 가타카나 (대부분 아직 자료 없음) */
-const KATAKANA_WITH_IMAGE = new Set<string>(['30a4']) // イ
 
 function k(
   char: string,
@@ -19,7 +16,7 @@ function k(
   seq += 1
   const isKatakana = /[ァ-ヶ]/.test(char)
   const hex = char.codePointAt(0)!.toString(16)
-  const hasImage = isKatakana ? KATAKANA_WITH_IMAGE.has(hex) : !NO_MNEMONIC_IMAGE.has(hex)
+  const hasImage = !NO_MNEMONIC_IMAGE.has(hex)
   const folder = isKatakana ? 'katakana' : 'hiragana'
   return {
     id: `kn-${String(seq).padStart(3, '0')}`,
