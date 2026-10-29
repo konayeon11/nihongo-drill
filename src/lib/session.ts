@@ -1,7 +1,7 @@
 import type { Card, CardProgress, Deck, QuizQuestion, QuizType, UserState } from '../types'
 import { ALL_DECKS, allCards, cardsByDeck, grammar } from '../data/cards'
 import { isDue, today } from './date'
-export { normalizeKana, kanaEqual, fuzzyMatchKo } from './match'
+export { fuzzyMatchKo } from './match'
 
 export const SESSION_SIZE = 15
 
@@ -163,10 +163,6 @@ export function hasMoreFreshBeyondBudget(
 
 // ── 문제 생성 ────────────────────────────────────
 
-function canType(card: Card): boolean {
-  return card.deck === 'word' && card.reading.length > 0 && card.reading !== card.front
-}
-
 /**
  * 복습 횟수(reps)가 늘수록 "고르기"보다 "타이핑"(능동 회상) 비중을 높인다.
  * 배열에 같은 유형을 여러 번 넣어 추첨 가중치를 준다.
@@ -179,12 +175,9 @@ function typesFor(card: Card, reps: number): QuizType[] {
     case 'kana':
       if (reps === 1) return ['choice-jp-ko', 'choice-ko-jp']
       return ['choice-jp-ko', 'choice-jp-ko', 'choice-ko-jp', 'listen']
-    case 'word': {
+    case 'word':
       if (reps === 1) return ['choice-jp-ko', 'choice-ko-jp']
-      const t: QuizType[] = ['typing-meaning', 'typing-meaning', 'choice-jp-ko', 'listen']
-      if (canType(card)) t.push('typing-kana', 'typing-kana')
-      return t
-    }
+      return ['typing-meaning', 'typing-meaning', 'choice-jp-ko', 'listen']
     case 'kanji':
       if (reps === 1) return ['choice-jp-ko', 'choice-ko-jp']
       return ['typing-meaning', 'typing-meaning', 'choice-jp-ko', 'listen']
@@ -264,10 +257,6 @@ export function makeQuestion(card: Card, p?: CardProgress): QuizQuestion {
     return { card, type, answer: card.front, choices: shuffle([card.front, ...wrong]), isNew }
   }
 
-  if (type === 'typing-kana') {
-    return { card, type, answer: card.reading, isNew }
-  }
-
   if (type === 'typing-meaning') {
     return { card, type, answer: card.back, isNew }
   }
@@ -279,7 +268,6 @@ export const TYPE_PROMPT: Record<QuizType, string> = {
   'choice-jp-ko': '뜻을 고르세요',
   'choice-ko-jp': '알맞은 일본어를 고르세요',
   listen: '잘 듣고 뜻을 고르세요',
-  'typing-kana': '읽는 법을 히라가나로 입력하세요',
   'typing-meaning': '뜻을 한글로 입력하세요',
   flashcard: '뜻을 떠올린 뒤 확인하세요',
   cloze: '빈칸에 들어갈 문법을 고르세요',

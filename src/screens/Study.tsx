@@ -3,13 +3,12 @@ import type { Deck, Grade, QuizQuestion, SessionAnswer } from '../types'
 import { DECK_LABEL, findSource } from '../data/cards'
 import { unitOf, unitTitleByCard } from '../data/units'
 import { TYPE_PROMPT, buildQueue, hasMoreFreshBeyondBudget, makeQuestion } from '../lib/session'
-import { fuzzyMatchKo, kanaEqual } from '../lib/match'
+import { fuzzyMatchKo } from '../lib/match'
 import { intervalLabel } from '../lib/srs'
 import { speak, ttsSupported } from '../lib/tts'
 import { navigate } from '../router'
 import { useApp } from '../state/AppContext'
 import { SpeakButton } from '../components/SpeakButton'
-import { KanaKeypad } from '../components/KanaKeypad'
 
 const MAX_REQUEUE = 2
 /** 오답 재시험과 별개로, 정답을 맞혀도 아직 충분히 숙련되지 않은 카드는
@@ -193,15 +192,11 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
 
   const onSubmitTyping = () => {
     if (feedback || !typed.trim()) return
-    const ok =
-      q.type === 'typing-meaning'
-        ? fuzzyMatchKo(typed, q.answer ?? '')
-        : kanaEqual(typed, q.answer ?? '')
+    const ok = fuzzyMatchKo(typed, q.answer ?? '')
     commit(ok ? 2 : 0, ok)
   }
 
-  const showReading =
-    (q.type === 'flashcard' ? revealed : true) && q.card.deck !== 'kanji' && q.type !== 'typing-kana'
+  const showReading = (q.type === 'flashcard' ? revealed : true) && q.card.deck !== 'kanji'
 
   return (
     <div className="screen screen--study">
@@ -254,7 +249,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
                 )}
               </p>
             )}
-            {q.type !== 'typing-kana' && q.card.deck !== 'kana' && <SpeakButton text={q.card.ttsText} />}
+            {q.card.deck !== 'kana' && <SpeakButton text={q.card.ttsText} />}
           </>
         )}
 
@@ -290,29 +285,6 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
               </button>
             )
           })}
-        </div>
-      )}
-
-      {q.type === 'typing-kana' && (
-        <div className="typing">
-          <input
-            className="input input--kana"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && onSubmitTyping()}
-            placeholder="ひらがな"
-            autoComplete="off"
-            autoCapitalize="off"
-            disabled={!!feedback}
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus
-          />
-          {!feedback && <KanaKeypad value={typed} onChange={setTyped} />}
-          {!feedback && (
-            <button className="btn btn--primary" onClick={onSubmitTyping} disabled={!typed.trim()}>
-              확인
-            </button>
-          )}
         </div>
       )}
 

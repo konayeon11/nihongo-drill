@@ -139,11 +139,9 @@ input {
 .example-ko,
 .body,
 .input,
-.input--kana,
 .feedback-answer,
 .confuse-char,
-.confuse-note,
-.key {
+.confuse-note {
   font-family: var(--font-legible);
 }
 
@@ -1231,52 +1229,6 @@ input {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.input--kana {
-  font-size: 22px;
-  text-align: center;
-}
-
-.keypad {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 10px;
-}
-
-.keypad-tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.keypad-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 5px;
-}
-
-.key {
-  appearance: none;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  border-radius: 9px;
-  padding: 10px 0;
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.key:active {
-  background: var(--primary-soft);
-}
-
-.key--empty {
-  visibility: hidden;
 }
 
 .grades {
