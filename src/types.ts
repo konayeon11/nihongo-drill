@@ -161,7 +161,6 @@ export type QuizType =
   | 'choice-ko-jp'
   | 'listen'
   | 'typing-kana'
-  | 'typing-romaji'
   | 'typing-meaning'
   | 'flashcard'
   | 'cloze'

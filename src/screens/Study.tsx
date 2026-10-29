@@ -196,9 +196,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
     const ok =
       q.type === 'typing-meaning'
         ? fuzzyMatchKo(typed, q.answer ?? '')
-        : q.type === 'typing-romaji'
-          ? typed.trim().toLowerCase() === (q.answer ?? '').toLowerCase()
-          : kanaEqual(typed, q.answer ?? '')
+        : kanaEqual(typed, q.answer ?? '')
     commit(ok ? 2 : 0, ok)
   }
 
@@ -312,28 +310,6 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
           {!feedback && <KanaKeypad value={typed} onChange={setTyped} />}
           {!feedback && (
             <button className="btn btn--primary" onClick={onSubmitTyping} disabled={!typed.trim()}>
-              확인
-            </button>
-          )}
-        </div>
-      )}
-
-      {q.type === 'typing-romaji' && (
-        <div className="typing">
-          <input
-            className="input input--kana"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && onSubmitTyping()}
-            placeholder="romaji"
-            autoComplete="off"
-            autoCapitalize="off"
-            disabled={!!feedback}
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus
-          />
-          {!feedback && (
-            <button className="btn btn--primary btn--lg" onClick={onSubmitTyping} disabled={!typed.trim()}>
               확인
             </button>
           )}

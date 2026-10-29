@@ -5,6 +5,9 @@ export { normalizeKana, kanaEqual, fuzzyMatchKo } from './match'
 
 export const SESSION_SIZE = 15
 
+/** 가나(히라가나·가타카나)를 다 배우기 전까지 세션에서 차지하는 비중 */
+const KANA_PRIORITY_RATIO = 0.7
+
 export function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -104,14 +107,48 @@ export function buildQueue(opts: QueueOptions): QuizQuestion[] {
     const set = new Set(opts.cardIds)
     picked = shuffle(allCards.filter((c) => set.has(c.id))).slice(0, size)
   } else {
-    const review = shuffle(dueCards(progress, decks, ref))
     const effectiveUser = opts.extraNew ? { ...user, newPerDay: user.newPerDay + opts.extraNew } : user
-    const budget = Math.min(newBudget(effectiveUser, newLearnedToday), size)
-    const fresh = shuffle(freshCards(progress, decks)).slice(0, budget)
-    picked = interleave(review, fresh).slice(0, size)
+    const totalBudget = Math.min(newBudget(effectiveUser, newLearnedToday), size)
+
+    const restDecks = decks.filter((d) => d !== 'kana')
+    // 단어 등 다른 덱은 가나를 읽을 줄 알아야 하므로, 가나를 아직 다 배우지 않았다면
+    // (신규 가나 카드가 남아 있다면) 가나 70% · 나머지 30%로 편성한다
+    const kanaUnfinished = decks.includes('kana') && freshCards(progress, ['kana']).length > 0
+
+    if (kanaUnfinished && restDecks.length > 0) {
+      const kanaSize = Math.round(size * KANA_PRIORITY_RATIO)
+      const restSize = size - kanaSize
+      const kanaBudget = Math.min(totalBudget, kanaSize)
+      const restBudget = Math.max(0, totalBudget - kanaBudget)
+
+      const kanaPicked = pickFromDecks(progress, ['kana'], ref, kanaSize, kanaBudget)
+      const restPicked = pickFromDecks(progress, restDecks, ref, restSize, restBudget)
+      picked = shuffle([...kanaPicked, ...restPicked])
+
+      // 가나·나머지 덱 모두 카드가 부족해 목표 개수를 못 채웠다면, 남는 덱에서 더 채운다
+      if (picked.length < size) {
+        const pickedIds = new Set(picked.map((c) => c.id))
+        const leftover = shuffle(dueCards(progress, decks, ref)).filter((c) => !pickedIds.has(c.id))
+        picked = [...picked, ...leftover].slice(0, size)
+      }
+    } else {
+      picked = pickFromDecks(progress, decks, ref, size, totalBudget)
+    }
   }
 
   return picked.map((card) => makeQuestion(card, progress[card.id]))
+}
+
+function pickFromDecks(
+  progress: ProgressMap,
+  decks: Deck[],
+  ref: string,
+  size: number,
+  budget: number,
+): Card[] {
+  const review = shuffle(dueCards(progress, decks, ref))
+  const fresh = shuffle(freshCards(progress, decks)).slice(0, budget)
+  return interleave(review, fresh).slice(0, size)
 }
 
 /** 오늘 더 꺼내올 수 있는 신규 카드가 남아 있는지 (한도 때문에 못 꺼내온 것인지 판단용) */
@@ -141,7 +178,7 @@ function typesFor(card: Card, reps: number): QuizType[] {
   switch (card.deck) {
     case 'kana':
       if (reps === 1) return ['choice-jp-ko', 'choice-ko-jp']
-      return ['typing-romaji', 'typing-romaji', 'choice-jp-ko']
+      return ['choice-jp-ko', 'choice-jp-ko', 'choice-ko-jp', 'listen']
     case 'word': {
       if (reps === 1) return ['choice-jp-ko', 'choice-ko-jp']
       const t: QuizType[] = ['typing-meaning', 'typing-meaning', 'choice-jp-ko', 'listen']
@@ -227,7 +264,7 @@ export function makeQuestion(card: Card, p?: CardProgress): QuizQuestion {
     return { card, type, answer: card.front, choices: shuffle([card.front, ...wrong]), isNew }
   }
 
-  if (type === 'typing-kana' || type === 'typing-romaji') {
+  if (type === 'typing-kana') {
     return { card, type, answer: card.reading, isNew }
   }
 
@@ -243,7 +280,6 @@ export const TYPE_PROMPT: Record<QuizType, string> = {
   'choice-ko-jp': '알맞은 일본어를 고르세요',
   listen: '잘 듣고 뜻을 고르세요',
   'typing-kana': '읽는 법을 히라가나로 입력하세요',
-  'typing-romaji': '읽는 법을 로마자로 입력하세요',
   'typing-meaning': '뜻을 한글로 입력하세요',
   flashcard: '뜻을 떠올린 뒤 확인하세요',
   cloze: '빈칸에 들어갈 문법을 고르세요',
