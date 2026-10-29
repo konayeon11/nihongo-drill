@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Deck, Grade, QuizQuestion, SessionAnswer } from '../types'
+import type { Deck, Grade, KanaItem, QuizQuestion, SessionAnswer } from '../types'
 import { DECK_LABEL, findSource } from '../data/cards'
 import { unitOf, unitTitleByCard } from '../data/units'
 import { TYPE_PROMPT, buildQueue, hasMoreFreshBeyondBudget, makeQuestion } from '../lib/session'
@@ -260,6 +260,13 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
 
         {q.type === 'flashcard' && revealed && (
           <div className="reveal">
+            {q.card.deck === 'kana' && (source?.item as KanaItem | undefined)?.image && (
+              <img
+                className="mnemonic-img"
+                src={`${import.meta.env.BASE_URL}${(source!.item as KanaItem).image}`}
+                alt={`${q.card.front} 연상 이미지`}
+              />
+            )}
             {q.card.deck === 'kanji' && (
               <p className="reading reading--block">
                 {q.card.reading}

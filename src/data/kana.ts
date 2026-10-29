@@ -3,6 +3,9 @@ import { toRomaji } from '../lib/romanize'
 
 let seq = 0
 
+/** public/assets/hiragana/ 에 연상 이미지가 없는 글자 (そ는 자료 누락) */
+const NO_MNEMONIC_IMAGE = new Set(['305d'])
+
 function k(
   char: string,
   row: string,
@@ -12,6 +15,8 @@ function k(
 ): KanaItem {
   seq += 1
   const isKatakana = /[ァ-ヶ]/.test(char)
+  const hex = char.codePointAt(0)!.toString(16)
+  const hasImage = !isKatakana && !NO_MNEMONIC_IMAGE.has(hex)
   return {
     id: `kn-${String(seq).padStart(3, '0')}`,
     char,
@@ -21,6 +26,7 @@ function k(
     shape,
     mnemonic,
     confuse: opts.confuse,
+    image: hasImage ? `assets/hiragana/${hex}.png` : undefined,
   }
 }
 

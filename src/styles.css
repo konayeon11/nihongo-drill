@@ -1111,6 +1111,14 @@ input {
   margin-top: 6px;
 }
 
+.mnemonic-img {
+  max-width: 220px;
+  width: 60%;
+  height: auto;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
 .example {
   background: var(--surface-2);
   border-radius: 12px;

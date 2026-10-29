@@ -89,6 +89,13 @@ export function Detail({ id }: { id: string }) {
 
       {source.kind === 'kana' && (
         <section className="card">
+          {(source.item as KanaItem).image && (
+            <img
+              className="mnemonic-img"
+              src={`${import.meta.env.BASE_URL}${(source.item as KanaItem).image}`}
+              alt={`${card.front} 연상 이미지`}
+            />
+          )}
           <h2 className="card-title">글자 유래</h2>
           <p className="body">{(source.item as KanaItem).shape}</p>
           <h2 className="card-title">외우는 법</h2>
