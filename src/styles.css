@@ -1374,6 +1374,22 @@ input {
   font-weight: 700;
 }
 
+.feedback-reading {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.speak--inline {
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  flex: none;
+}
+
 .feedback-next {
   margin: 0;
   font-size: 12px;

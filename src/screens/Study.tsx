@@ -84,6 +84,13 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
     if (q?.type === 'listen' && user.tts && ttsSupported()) speak(q.card.ttsText)
   }, [q, user.tts])
 
+  // 정답을 맞혔을 때, 문제 유형 때문에 화면에 읽는 법/음성이 안 나왔더라도
+  // 확인할 수 있도록 정답 음성을 자동으로 들려준다.
+  useEffect(() => {
+    if (feedback?.correct && q?.card.ttsText && user.tts && ttsSupported()) speak(q.card.ttsText)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedback])
+
   const source = useMemo(() => (q ? findSource(q.card.id) : null), [q])
 
   const example = useMemo(() => {
@@ -390,6 +397,35 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
             <strong>{feedback.correct ? '정답!' : '아쉬워요'}</strong>
             <span className="feedback-xp">+{feedback.xp} XP</span>
           </div>
+          {feedback.correct && (q.card.deck !== 'grammar' ? q.card.reading : example) && (
+            <p className="feedback-reading">
+              {q.card.deck === 'grammar'
+                ? example && (
+                    <>
+                      {example.jp}
+                      <span className="kr"> · {example.kana}</span>
+                    </>
+                  )
+                : (
+                    <>
+                      {q.card.reading}
+                      {user.showKr && q.card.kr && q.card.deck !== 'kana' && (
+                        <span className="kr"> · {q.card.kr}</span>
+                      )}
+                    </>
+                  )}
+              {ttsSupported() && user.tts && (
+                <button
+                  type="button"
+                  className="speak speak--inline"
+                  onClick={() => speak(q.card.ttsText)}
+                  aria-label="다시 듣기"
+                >
+                  🔊
+                </button>
+              )}
+            </p>
+          )}
           {!feedback.correct && (
             <p className="feedback-answer">
               {q.card.front}
