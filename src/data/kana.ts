@@ -3,8 +3,8 @@ import { toRomaji } from '../lib/romanize'
 
 let seq = 0
 
-/** public/assets/hiragana/ 에 연상 이미지가 없는 글자 (そ는 자료 누락) */
-const NO_MNEMONIC_IMAGE = new Set(['305d'])
+/** public/assets/hiragana/ 에 연상 이미지가 없는 글자 */
+const NO_MNEMONIC_IMAGE = new Set<string>([])
 
 function k(
   char: string,
