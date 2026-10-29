@@ -295,6 +295,7 @@ export function Study({ deck, unitId }: { deck?: string; unitId?: string }) {
 
       {q.type === 'typing-kana' && (
         <div className="typing">
+          <p className="hint">🎤 일본어 자판의 음성 입력으로 말하기 연습도 해보세요</p>
           <input
             className="input input--kana"
             value={typed}
